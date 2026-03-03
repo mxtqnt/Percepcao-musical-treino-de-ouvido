@@ -1,0 +1,301 @@
+<!DOCTYPE html>
+<html lang="pt-br">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Percepção Musical - Treino de Ouvido</title>
+    <style>
+        :root {
+            --primary: #2c3e50;
+            --accent: #3498db;
+            --correct: #27ae60;
+            --wrong: #e74c3c;
+            --white: #ffffff;
+            --black: #1a1a1a;
+            --footer-bg: #f8f9fa;
+            --footer-text: #7f8c8d;
+        }
+
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background-color: #f4f7f6;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            min-height: 100vh; /* Garante que o corpo ocupe a tela toda */
+            margin: 0;
+            padding: 20px;
+        }
+
+        .container {
+            background: white;
+            padding: 2rem;
+            border-radius: 15px;
+            box-shadow: 0 10px 25px rgba(0,0,0,0.1);
+            text-align: center;
+            max-width: 800px;
+            width: 100%;
+            flex-grow: 1; /* Faz o container empurrar o rodapé para baixo */
+            margin-bottom: 40px;
+        }
+
+        .stats {
+            display: flex;
+            justify-content: space-around;
+            margin-bottom: 20px;
+            font-size: 1.2rem;
+            font-weight: bold;
+            flex-wrap: wrap;
+            gap: 15px;
+        }
+
+        #score { color: var(--correct); }
+        #errors { color: var(--wrong); }
+
+        .controls { margin-bottom: 30px; }
+
+        button#play-btn {
+            background-color: var(--accent);
+            color: white;
+            border: none;
+            padding: 15px 30px;
+            border-radius: 50px;
+            font-size: 1.1rem;
+            cursor: pointer;
+            transition: transform 0.2s, background 0.3s;
+        }
+
+        button#play-btn:hover { 
+            transform: scale(1.05);
+            background-color: #2980b9;
+        }
+
+        .piano {
+            display: flex;
+            justify-content: center;
+            position: relative;
+            height: 200px;
+            margin-top: 20px;
+            padding-bottom: 10px;
+            overflow-x: auto; /* Para telas pequenas */
+        }
+
+        .key {
+            cursor: pointer;
+            position: relative;
+            transition: background 0.1s;
+            user-select: none;
+        }
+
+        .white-key {
+            width: 60px;
+            height: 200px;
+            background: white;
+            border: 1px solid #ccc;
+            z-index: 1;
+            border-radius: 0 0 5px 5px;
+        }
+
+        .black-key {
+            width: 34px;
+            height: 120px;
+            background: var(--black);
+            z-index: 2;
+            margin-left: -17px;
+            margin-right: -17px;
+            border-radius: 0 0 3px 3px;
+        }
+
+        .key.correct { background-color: var(--correct) !important; }
+        .key.wrong { background-color: var(--wrong) !important; }
+        
+        select {
+            padding: 8px;
+            border-radius: 5px;
+            border: 1px solid #ccc;
+        }
+
+        /* --- Estilo do Footer --- */
+        footer {
+            width: 100%;
+            text-align: center;
+            padding: 20px 0;
+            color: var(--footer-text);
+            font-size: 0.9rem;
+            border-top: 1px solid #eee;
+            margin-top: auto;
+        }
+
+        footer a {
+            color: var(--accent);
+            text-decoration: none;
+            font-weight: bold;
+            transition: opacity 0.2s;
+        }
+
+        footer a:hover {
+            opacity: 0.8;
+            text-decoration: underline;
+        }
+
+        .instagram-icon {
+            display: inline-block;
+            vertical-align: middle;
+            margin-right: 5px;
+        }
+    </style>
+</head>
+<body>
+
+<div class="container">
+    <h2>Percepção de Notas</h2>
+    
+    <div class="stats">
+        <span>Acertos: <span id="score">0</span></span>
+        <span>Erros: <span id="errors">0</span></span>
+        <div>
+            Nível: 
+            <select id="level-select">
+                <option value="natural">Notas Naturais</option>
+                <option value="accidental">Cromática</option>
+            </select>
+        </div>
+    </div>
+
+    <div class="controls">
+        <p>Ouça a nota e identifique-a no piano:</p>
+        <button id="play-btn">🎵 Tocar Nota</button>
+    </div>
+
+    <div class="piano" id="piano"></div>
+</div>
+
+<footer>
+    <p>Desenvolvido por <strong>anamisque</strong></p>
+    <p>
+        <a href="https://www.instagram.com/anamisque" target="_blank">
+            <svg class="instagram-icon" xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="currentColor" viewBox="0 0 16 16">
+                <path d="M8 0C5.829 0 5.556.01 4.703.048 3.85.088 3.269.222 2.76.42a3.917 3.917 0 0 0-1.417.923A3.927 3.927 0 0 0 .42 2.76C.222 3.268.087 3.85.048 4.7.01 5.555 0 5.827 0 8.001c0 2.172.01 2.444.048 3.297.04.852.174 1.433.372 1.942.205.526.478.972.923 1.417.444.445.89.719 1.416.923.51.198 1.09.333 1.942.372C5.555 15.99 5.827 16 8 16s2.444-.01 3.298-.048c.851-.04 1.434-.174 1.943-.372a3.916 3.916 0 0 0 1.416-.923c.445-.445.718-.891.923-1.417.197-.509.332-1.09.372-1.942C15.99 10.445 16 10.173 16 8s-.01-2.445-.048-3.299c-.04-.851-.175-1.433-.372-1.941a3.926 3.926 0 0 0-.923-1.417A3.911 3.911 0 0 0 13.24.42c-.51-.198-1.092-.333-1.943-.372C10.443.01 10.172 0 7.999 0h.001zm-.312 1.469c.822-.039 1.147-.047 3.11-.047 1.961 0 2.287.008 3.108.047.744.033 1.145.158 1.414.263.357.137.611.302.88.57.267.269.432.523.57.88.104.269.23.67.263 1.413.039.822.047 1.147.047 3.11 0 1.961-.008 2.287-.047 3.108-.033.744-.158 1.145-.263 1.414a2.52 2.52 0 0 1-.57.88 2.523 2.523 0 0 1-.88.57c-.269.104-.67.23-1.413.263-.822.039-1.147.047-3.11.047-1.961 0-2.287-.008-3.109-.047-.744-.033-1.145-.158-1.414-.263a2.528 2.528 0 0 1-.88-.57 2.528 2.528 0 0 1-.57-.88c-.104-.269-.23-.67-.263-1.413-.039-.822-.047-1.147-.047-3.11 0-1.961.008-2.287.047-3.108.033-.744.158-1.145.263-1.414.137-.357.302-.611.57-.88.269-.267.523-.432.88-.57.269-.104.67-.23 1.413-.263zm6.087.95a1.125 1.125 0 1 0 0 2.25 1.125 1.125 0 0 0 0-2.25zM8 4a4 4 0 1 0 0 8 4 4 0 0 0 0-8zm0 6.667a2.667 2.667 0 1 1 0-5.334 2.667 2.667 0 0 1 0 5.334z"/>
+            </svg>@anamisque
+        </a>
+    </p>
+</footer>
+
+<script>
+    // [O código JavaScript permanece o mesmo]
+    const notesData = [
+        { name: 'C', freq: 261.63, type: 'white' },
+        { name: 'C#', freq: 277.18, type: 'black' },
+        { name: 'D', freq: 293.66, type: 'white' },
+        { name: 'D#', freq: 311.13, type: 'black' },
+        { name: 'E', freq: 329.63, type: 'white' },
+        { name: 'F', freq: 349.23, type: 'white' },
+        { name: 'F#', freq: 369.99, type: 'black' },
+        { name: 'G', freq: 392.00, type: 'white' },
+        { name: 'G#', freq: 415.30, type: 'black' },
+        { name: 'A', freq: 440.00, type: 'white' },
+        { name: 'A#', freq: 466.16, type: 'black' },
+        { name: 'B', freq: 493.88, type: 'white' }
+    ];
+
+    let currentNote = null;
+    let score = 0;
+    let errors = 0; 
+    let canClick = true; 
+    const audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+
+    const pianoContainer = document.getElementById('piano');
+    const playBtn = document.getElementById('play-btn');
+    const scoreDisplay = document.getElementById('score');
+    const errorsDisplay = document.getElementById('errors'); 
+    const levelSelect = document.getElementById('level-select');
+
+    function playTone(freq) {
+        if (audioCtx.state === 'suspended') audioCtx.resume();
+        const oscillator = audioCtx.createOscillator();
+        const gainNode = audioCtx.createGain();
+
+        oscillator.type = 'triangle';
+        oscillator.frequency.setValueAtTime(freq, audioCtx.currentTime);
+        
+        gainNode.gain.setValueAtTime(0.4, audioCtx.currentTime);
+        gainNode.gain.exponentialRampToValueAtTime(0.01, audioCtx.currentTime + 0.8);
+
+        oscillator.connect(gainNode);
+        gainNode.connect(audioCtx.destination);
+
+        oscillator.start();
+        oscillator.stop(audioCtx.currentTime + 0.8);
+    }
+
+    function renderPiano() {
+        pianoContainer.innerHTML = '';
+        notesData.forEach(note => {
+            const key = document.createElement('div');
+            key.className = `key ${note.type}-key`;
+            key.dataset.note = note.name;
+            
+            key.addEventListener('mousedown', (e) => {
+                e.stopPropagation();
+                checkNote(note);
+            });
+            pianoContainer.appendChild(key);
+        });
+    }
+
+    function pickNewNote() {
+        const level = levelSelect.value;
+        const pool = level === 'natural' 
+            ? notesData.filter(n => n.type === 'white') 
+            : notesData;
+        
+        const lastNote = currentNote;
+        do {
+            currentNote = pool[Math.floor(Math.random() * pool.length)];
+        } while (currentNote === lastNote);
+    }
+
+    function checkNote(clickedNote) {
+        if (!currentNote || !canClick) return;
+
+        const keyElement = document.querySelector(`[data-note="${clickedNote.name}"]`);
+        
+        if (clickedNote.name === currentNote.name) {
+            canClick = false;
+            score += 1;
+            scoreDisplay.textContent = score;
+            keyElement.classList.add('correct');
+            playTone(clickedNote.freq);
+            
+            setTimeout(() => {
+                keyElement.classList.remove('correct');
+                pickNewNote();
+                canClick = true;
+            }, 600);
+        } else {
+            errors += 1;
+            errorsDisplay.textContent = errors;
+            keyElement.classList.add('wrong');
+            playTone(clickedNote.freq);
+            setTimeout(() => keyElement.classList.remove('wrong'), 300);
+        }
+    }
+
+    playBtn.addEventListener('click', () => {
+        if (!currentNote) pickNewNote();
+        playTone(currentNote.freq);
+    });
+
+    levelSelect.addEventListener('change', () => {
+        score = 0;
+        errors = 0;
+        scoreDisplay.textContent = score;
+        errorsDisplay.textContent = errors;
+        currentNote = null; 
+        pickNewNote();
+    });
+
+    renderPiano();
+</script>
+</body>
+</html>
